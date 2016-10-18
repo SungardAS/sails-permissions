@@ -69,7 +69,8 @@ module.exports = {
       return new Promise(function (resolve, reject) {
         findRecords(req, {
           ok: resolve,
-          serverError: reject
+          serverError: reject,
+          notFound: resolve
         });
       });
     }
