@@ -5,16 +5,6 @@ var methodMap = {
   PUT: 'update',
   DELETE: 'delete'
 };
-var actionMap = {
-  create: 'create',
-  find: 'read',
-  findOne: 'read',
-  update: 'update',
-  destroy: 'delete',
-  populate: 'read',
-  add: 'update',
-  remove: 'update'
-};
 
 var findRecords = require('sails/lib/hooks/blueprints/actions/find');
 var populateRecords = require('sails/lib/hooks/blueprints/actions/populate');
@@ -38,6 +28,8 @@ module.exports = {
    */
   isForeignObject: function (owner) {
     return function (object) {
+      //sails.log('object', object);
+      //sails.log('object.owner: ', object.owner, ', owner:', owner);
       return object.owner !== owner;
     };
   },
@@ -79,12 +71,12 @@ module.exports = {
    * Query Permissions that grant privileges to a role/user on an action for a
    * model.
    *
-   * @param options.action
+   * @param options.method
    * @param options.model
    * @param options.user
    */
   findModelPermissions: function (options) {
-    var action = PermissionService.getAction(options);
+    var action = PermissionService.getMethod(options.method);
     var permissionCriteria = {
       model: options.model.id,
       action: action
@@ -188,23 +180,15 @@ module.exports = {
    */
   getErrorMessage: function (options) {
     return [
-      'User', options.user.email, 'is not permitted to', options.action, options.model.identity
+      'User', options.user.email, 'is not permitted to', options.method, options.model.globalId
     ].join(' ');
   },
 
   /**
-   * Given a request, return the CRUD action or controller action it maps
-   * to.
-   *
-   * @param req.options
-   *
-   * If a standard blueprint action, then translate that blueprint action into a
-   * CRUD action. If a custom controller action, then return the name of that action as-is.
+   * Given an action, return the CRUD method it maps to.
    */
-  getAction: function (options) {
-    var action = actionMap[options.action] || options.action;
-
-    return action;
+  getMethod: function (method) {
+    return methodMap[method];
   },
 
   /**
@@ -314,8 +298,8 @@ module.exports = {
     }
 
     return Role.findOne({name: rolename}).populate('users').then(function (role) {
-        User.find({username: usernames}).then(function (users) {
-            role.users.add(users);
+        return User.find({username: usernames}).then(function (users) {
+            role.users.add(_.pluck(users, 'id'));
             return role.save();
         });
     });

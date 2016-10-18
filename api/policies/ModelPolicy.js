@@ -1,14 +1,15 @@
+var actionUtil = require('sails/lib/hooks/blueprints/actionUtil');
+var Promise = require('bluebird');
+
 /**
  * Query the Model that is being acted upon, and set it on the req object.
  */
-
-var Promise = require('bluebird');
-
 module.exports = function ModelPolicy (req, res, next) {
 
   var promiseAry = [];
+  req.options.modelIdentity = actionUtil.parseModel(req).identity;
 
-  var modelPromise = genModelPromise(req.options.model)
+  var modelPromise = genModelPromise(req.options.modelIdentity)
   .then(function(model) {
     if (!model) {
       req.options.unknownModel = true;
@@ -46,7 +47,7 @@ var genModelPromise = function(reqModel) {
   var modelCache = sails.hooks['sails-permissions']._modelCache;
   var model = modelCache[reqModel];
 
-  if (_.isObject(model) && !_.isUndefined(model.id)) {
+  if (_.isObject(model) && !_.isNull(model.id)) {
     return Promise.resolve(model);
   }
 
