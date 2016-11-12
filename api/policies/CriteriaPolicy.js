@@ -96,14 +96,25 @@ function responsePolicy(criteria, _data, options) {
 
   var permitted = data.reduce(function(memo, item) {
     criteria.some(function(crit) {
-      var filtered = wlFilter([item], {
-        where: {
-          or: [crit.where || {}]
+        var filtered = [];
+        if (Object.keys(crit.where).length == 1 && typeof(crit.where[Object.keys(crit.where)[0]]) == 'object') {
+            var nestedItem = item[Object.keys(crit.where)[0]];
+            var nestedCritWhere = crit.where[Object.keys(crit.where)[0]];
+            filtered = wlFilter([nestedItem], {
+                where: {
+                    or: [nestedCritWhere]
+                }
+            }).results;
         }
-      }).results;
+        else {
+            filtered = wlFilter([item], {
+                where: {
+                    or: [crit.where || {}]
+                }
+            }).results;
+        }
 
       if (filtered.length) {
-
         if (crit.blacklist && crit.blacklist.length) {
           crit.blacklist.forEach(function (term) {
             delete item[term];
