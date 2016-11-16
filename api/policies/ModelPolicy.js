@@ -15,15 +15,19 @@ module.exports = function ModelPolicy (req, res, next) {
     req.model = model;
 
     if (req.options.action === 'populate') {
+      sails.log.debug("###############populate starts in ModelPolicy");
       req.options.modelDefinition.findOne(req.param('parentid')).then(function(parentObj) {
         // find permission(s) on the parent model and check if there is any criteria that matches with parentObj
         var options = _.defaults({
           model: req.model,
           user: req.user
         }, req.options);
+        sails.log.debug("###options.model: ", options.model);
+        sails.log.debug("###options.user: ", options.user);
         PermissionService.findModelPermissions(options).then(function (permissions) {
           sails.log.silly('PermissionPolicy:', permissions.length, 'permissions grant',
               PermissionService.getAction(options), 'on', req.model.name, 'for', req.user.username);
+	        sails.log.debug('permissions:', JSON.stringify(permissions));
           if (!permissions || permissions.length === 0) {
             return res.badRequest({
               error: 'Cannot perform action [' + req.options.action + '] on parent object'
@@ -46,8 +50,8 @@ module.exports = function ModelPolicy (req, res, next) {
               }
               req.options.populateModelDefinition = sails.models[model.identity];
               req.populateModel = model;
+              next();
             });
-            next();
           }
         });
       });
