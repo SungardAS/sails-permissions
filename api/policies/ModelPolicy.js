@@ -19,25 +19,38 @@ module.exports = function ModelPolicy (req, res, next) {
   promiseAry.push(modelPromise);
 
   if (req.options.action === 'populate') {
-    var assoc = _.find(req.options.associations,{alias: req.options.alias})
-    var modelName = assoc[assoc.type];
-    var model = sails.models[assoc[assoc.type]];
 
-    var populateModelPromise = genModelPromise(modelName)
-    .then(function(model) {
-      if (!model) {
-        req.options.unknownPopulateModel = true;
+    req.modelDefinition.findOne(req.param('parentid')).then(function(parentObj) {
+      return PermissionService.isAllowedToPerformAction(parentObj, req.user, PermissionService.getAction(req.options.action), ModelService.getTargetModelName(req), req.body)
+    }).then(function(canPerform) {
+      if (!canPerform) {
+        return res.badRequest({
+          error: 'Cannot perform action [' + action + '] on parent object'
+        });
       }
-      req.options.populateModelDefinition = sails.models[model.identity];
-      req.populateModel = model;
+      else {
+        var assoc = _.find(req.options.associations,{alias: req.options.alias})
+        var modelName = assoc[assoc.type];
+        var model = sails.models[assoc[assoc.type]];
+
+        var populateModelPromise = genModelPromise(modelName)
+        .then(function(model) {
+          if (!model) {
+            req.options.unknownPopulateModel = true;
+          }
+          req.options.populateModelDefinition = sails.models[model.identity];
+          req.populateModel = model;
+        });
+        promiseAry.push(populateModelPromise);
+        Promise.all(promiseAry)
+        .nodeify(next);
+      }
     });
-    promiseAry.push(populateModelPromise);
-
   }
-
-  Promise.all(promiseAry)
-  .nodeify(next);
-
+  else {
+    Promise.all(promiseAry)
+    .nodeify(next);
+  }
 };
 
 
