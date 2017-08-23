@@ -34,7 +34,8 @@ module.exports = {
       enum: [
         'role',
         'owner',
-        'user'
+        'user',
+        'resource'
       ],
       defaultsTo: 'role',
       index: true
@@ -60,12 +61,44 @@ module.exports = {
     },
 
     /**
+     * This store the reference to the permission_resource table
+     */
+    object: {
+      model: 'Permission_Resource'
+      // Validate manually
+    },
+
+    /**
      * A list of criteria.  If any of the criteria match the request, the action is allowed.
      * If no criteria are specified, it is ignored altogether.
      */
     criteria: {
       collection: 'Criteria',
       via: 'permission'
+    },
+
+    /**
+     * The type of user like sungard admin, customer admin or customer user.
+     */
+    userType: {
+      type: 'string',
+      index: true
+    },
+
+    /**
+     * The type of account like self managed, managed or un-managed.
+     */
+    accountType: {
+      type: 'string',
+      index: true
+    },
+
+    /**
+     * The granted / denied state.
+     */
+    state: {
+      type: 'string',
+      index: true
     }
   },
 
