@@ -4,7 +4,8 @@ var url = require('url');
 
 module.exports = function (req, res, next) {
   var ipAddress = req.headers['x-forwarded-for'] || (req.connection && req.connection.remoteAddress);
-  req.requestId = fnv.hash(new Date().valueOf() + ipAddress, 128).str();
+  if (req["id"]) req.requestId = req["id"];
+  else req.requestId = fnv.hash(new Date().valueOf() + ipAddress, 128).str();
 
   sails.models.requestlog.create({
     id: req.requestId,
